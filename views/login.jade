@@ -1,0 +1,20 @@
+extends login_layout
+ 
+block content
+    .container
+        .hero-unit
+            .row-fluid
+                .span9
+                    h2 ログイン画面
+                    h1= title
+                .span3
+                    form(action='/login')
+                        input(type='text',name='username',placeholder='Username')
+                        input(type='password',name='password',placeholder='Password')
+                        button.btn.btn-primary(type='submit') ログイン
+                    h2 新規登録
+                    form(action='/add',method='POST')
+                        input(type='text',name='username',placeholder='Username')
+                        input(type='password',name='password',placeholder='Password')
+                        button.btn.btn-primary(type='submit') 新規登録
+                    h3= kekka    

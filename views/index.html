@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,
+  initial-scale=1.0,user-scalable=no">
+
+  <title>Lesson</title>
+  <style type="text/css">
+    * {margin:0px; padding:0px;}
+    body,html{
+      width:80%;
+      font-family: "游ゴシック体", "Yu Gothic", YuGothic, sans-serif;  background-color: #eee;
+    }
+    body {
+      padding-left: 40px;
+    }
+    button {
+      width:40px;
+      height:40px;
+    }
+    header {
+      padding:.3em;
+      display: block;
+    }
+    header::after {
+      clear: both;
+
+    }
+    header h1{
+      margin: 0;padding: 0;
+      text-align: center;
+    }
+    nav {
+      z-index: 100;
+    }
+    nav i {
+      position: fixed;
+      left: 40px;
+      top:0;
+    }
+    nav i.fa{
+      font: normal normal normal FontAwesome;
+      font-size: 2em;
+      margin: .8em .8em .2em;
+    }
+    nav ul{
+      position: fixed;
+      left: -80%;
+      transition: .2s;
+      z-index: 100;
+    }
+    body.menu_open nav ul{
+      border: 1px solid #000;
+      background-color: #ccc;
+      left: 0;
+      z-index: 100;
+    }
+    body.menu_open nav ul li{
+      background-color: #ccc;
+      border-bottom: 1px solid #fff;
+      display: block;
+      z-index: 100;
+    }
+    /*
+    body.menu_open nav ul li div{
+      text-align: right;
+      border-bottom: none;
+      background-color: #ccc;
+    }*/
+    #all_clear {
+      float: right;
+    }
+    #logout {
+      float: right;
+    }
+    body.menu_open nav ul li form{
+      text-align: right;
+      z-index: 100;
+    }
+    @media screen and (max-width: 760px) {
+      #small{clear: both; margin: 0 19px;}
+      #middle{margin: 0 13px;}
+      .canvas #myCanvas{width: 100%;}
+    }
+    #small {margin-top: 20px; text-align:center; width: 22px; height: 22px; line-height:22px; font-size:100%;}
+    #middle {margin-top: 15px; text-align:center; width: 33px; height: 33px; line-height:33px; font-size:150%;}
+    #large {text-align:center; width: 44px; height: 44px; line-height:44px; font-size:200%;}
+    
+    
+    /*
+    button.selected {
+      border:1px solid #ccc;
+    }*/
+    .title {padding:10px;}
+    .main {padding-left:10px; margin:auto;}
+    .toolbar {}
+    .toolbar button{width:44px; height:44px; margin:auto;
+      border:1px solid #ccc; border-radius:6px; margin:10px; display:block; float:left; cursor: pointer;transition: .4s;}
+    .toolbar button:hover{opacity: 0.6;}
+    #black {background-color:black;}
+    #red {background-color:red;}
+    #green {background-color:green;}
+    #blue {background-color:blue;}
+    #white {background-color: white;border:2px solid #cfcfcf;}
+    
+    .canvas {width:550px; height:450px;border:1px solid #0cc;
+      display:inline-block;}
+    .canvas canvas {width:550px; height:450px;
+      position: absolute;
+    }
+    #myCanvas {z-index: 5;width:550px; height:450px;
+      position: absolute; background-color: #fff;}
+    #myCanvas2 {width:550px; height:450px;
+      position: absolute;opacity:0.2;z-index: 20;background-color: #fff;}
+    #wrap_v_c {position: relative; display:inline-block; text-align: center;}
+    #localVideo {height:120px; width:200px;border: solid 1px #ccc;background-color: #fff;}
+    #localVideo:after{content: "";display: block;}
+    #chat_list {height:280px; width:200; border:1px solid #0cc;
+      overflow:auto;text-align: left; background-color: #fff;}
+
+    #message {width:96%; border: 1px solid #0cc; padding:10px; background-color: #fff;}
+    #submit{padding:5px;}
+    .submit_button{width:100px;}
+    #canvas2 {height:120px; width:200px; border: solid 1px #ccc;text-align: center; display: none}
+    #remoteCanvas {border: solid 1px #0cc;width:200px;height:120px;background-color: #fff;}
+    #control {text-align:center;}
+    .awesome {opacity: 0.7;color: #336;float: left;cursor: pointer;}
+  </style>
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+</head>
+<body>
+
+  <!-- ここでsocket.IOのライブラリを読み込む --> 
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script src="//api.turnservers.com/api.js?key=your_api_key"></script>
+  <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+  <script src="./pdf.js"></script>
+
+  <script type="text/javascript">
+    window.addEventListener("load", function () {
+
+
+      //メニューの値受け渡し
+      $("#menu").on("click",function() {
+        console.log("click");
+        $("body").toggleClass("menu_open")
+      })
+      $(".list1 input").on("input",function() {
+        $(".list1 span").html($(".list1 input")[0].value+"%")
+        var w = $(".list1 input")[0].value;
+        $(".canvas").css("width",(450*0.01*w+"px"))
+        $(".canvas").css("height",(400*0.01*w+"px"))
+        console.log(w);
+        $(".canvas canvas").css("width",(450*0.01*$(".list1 input")[0].value)+"px")
+        $(".canvas canvas").css("height",(400*0.01*$(".list1 input")[0].value)+"px")
+
+      })
+      $(".list2 input").on("input",function() {
+        $(".list2 span").html($(".list2 input")[0].value+"%");
+        var w = $(".list2 input")[0].value;
+        $("#localVideo").css("width",(200*0.01*w+"px"))
+        $("#localVideo").css("height",(120*0.01*w+"px"))
+      })
+      $(".list3 input").on("input",function() {
+        $(".list3 span").html($(".list3 input")[0].value+"%");
+        var w = $(".list3 input")[0].value;        
+        $("#chat_list").css("width",(200*0.01*w+"px"))
+        $("#chat_list").css("height",(280*0.01*w+"px"))
+      })
+      $(".list4 input").on("input",function() {
+        $(".list4 span").html($(".list4 input")[0].value+"%");
+        var w = $(".list4 input")[0].value;        
+        $("#remoteCanvas").css("width",(200*0.01*w+"px"))
+        $("#remoteCanvas").css("height",(120*0.01*w+"px"))
+      })
+
+      // サーバーサイドのsocket.IOに接続する
+      // 接続出来たら、サーバー側のコンソールにconnected!と表示される
+      //var socket = io.connect('http://192.168.17.74:3000');
+      var socket = io.connect('http://192.168.43.221:3000');
+      
+
+      // Canvas描画に必要な変数を定義する
+      var canvas = document.getElementById("myCanvas");
+      var canvas_alf = document.getElementById("myCanvas2");
+      var c = canvas.getContext("2d");
+      var c_alf = canvas_alf.getContext("2d");
+      var w = 550;
+      var h = 450;
+      var drawing = false;
+      var drawing_alf = false;
+      var oldPos;
+
+      // Canvasを初期化する
+      canvas.width = w;
+      canvas.height = h;
+      c.strokeStyle = "#000000";
+      c.lineWidth = 5;
+      c.lineJoin = "round";
+      c.lineCap = "round";
+
+      c_alf.lineWidth = 15;
+      c_alf.lineJoin = "round";
+      c_alf.lineCap = "round";
+      
+      setInterval(function () {
+        var size = $(".list1 input")[0].value;
+        c_alf.fillStyle = "rgba(255,255,255,0.3)";
+        c_alf.fillRect(0,0,canvas_alf.width*size*0.01,canvas_alf.height*size*0.01);
+      },20);
+      /*
+      function all_clear () {
+        console.log("on all_c");
+        var size = $(".list1 input")[0].value;
+        c.clearRect(0,0,450*size*0.01,400*size*0.01);
+        socket.emit("all_clear",{value:size});
+      }
+      $("#all_clear").on("click",all_clear);
+      */
+      $("#all_clear").on("click",function () {
+        var size = $(".list1 input")[0].value;
+        c.clearRect(0,0,canvas.width*size*0.01,canvas.height*size*0.01);
+        socket.emit("all_clear");
+      });
+      // Canvas上の座標を計算する為の関数たち
+      function scrollX(){
+        return document.documentElement.scrollLeft || document.body.scrollLeft;
+      }
+      function scrollY(){
+        return document.documentElement.scrollTop || document.body.scrollTop;
+      }
+      function getPos (event) {        
+        var mouseX = event.clientX - $(canvas).position().left + scrollX();
+        var mouseY = event.clientY - $(canvas).position().top + scrollY();
+        var size = $(".list1 input")[0].value;
+        mouseX /= size*0.01;
+        mouseY /= size*0.01;
+        return {x:mouseX, y:mouseY};
+      }
+      function getPosT (event) {
+        var mouseX = event.touches[0].clientX - $(canvas).position().left + scrollX();
+        var mouseY = event.touches[0].clientY - $(canvas).position().top + scrollY();
+        var size = $(".list1 input")[0].value;
+        mouseX /= size*0.01;
+        mouseY /= size*0.01;        
+        return {x:mouseX, y:mouseY};
+      }
+                                   
+      // ここからは、Canvasに描画する為の処理
+      
+      canvas_alf.addEventListener("mouseover", function (event) {
+        console.log("mouseover_alf");
+        drawing_alf = true;
+        drawing = false;
+        oldPos = getPos(event);
+      }, false);
+      /*
+      canvas.addEventListener("mouseover", function (event) {
+        console.log("mousedown");
+        drawing = false;
+        drawing_alf = false;
+        oldPos = getPos(event);
+      }, false);
+               */         
+      canvas.addEventListener("mousedown", function (event) {
+        console.log("mousedown");
+        drawing = true;
+        drawing_alf = false;
+        /*
+        if (drawing) {
+          c.beginPath();
+          c.moveTo(oldPos.x, oldPos.y);
+          c.lineTo(pos.x, pos.y);
+          c.stroke();
+          c.closePath();
+         
+          // socket.IOサーバーに、
+          // どの点からどの点までを描画するかをの情報を送付する
+          socket.emit("draw", {before:oldPos, after:pos});
+          oldPos = pos;
+        }*/
+
+        oldPos = getPos(event);
+      }, false);
+      
+      canvas_alf.addEventListener("mousedown", function (event) {
+        console.log("mousedown_alf");
+        $("#myCanvas").css("z-index",20);
+        $("#myCanvas2").css("z-index",5);
+        drawing = true;
+        drawing_alf = false;
+        oldPos = getPos(event);
+      }, false);
+      canvas.addEventListener("mouseup", function () {
+        ////console.log("mouseup");
+        $("#myCanvas").css("z-index",5);
+        $("#myCanvas2").css("z-index",20);
+        drawing = false;
+      }, false);
+
+      canvas.addEventListener("mousemove", function (event) {
+        var pos = getPos(event);
+        console.log("aa");
+        ////console.log("mousemove : x=" + pos.x + ", y=" + pos.y + ", drawing=" + drawing);
+        if (drawing) {
+          c.beginPath();
+          c.moveTo(oldPos.x, oldPos.y);
+          c.lineTo(pos.x, pos.y);
+          c.stroke();
+          c.closePath();
+         
+          // socket.IOサーバーに、
+          // どの点からどの点までを描画するかをの情報を送付する
+          socket.emit("draw", {before:oldPos, after:pos});
+          oldPos = pos;
+        }
+      }, false);
+      var pdf_flag = false;
+      canvas_alf.addEventListener("mousemove", function (event) {
+        console.log("mousemove_alf");
+        var pos = getPos(event);
+        ////console.log("mousemove : x=" + pos.x + ", y=" + pos.y + ", drawing=" + drawing);
+        if(pdf_flag) {
+          c_alf.lineWidth = 30;
+          c_alf.arc(pos.x, pos.y, 15, 0, Math.PI*2, true);
+          c_alf.fill();
+        }
+
+        if (drawing_alf) {
+          c_alf.beginPath();
+          c_alf.moveTo(oldPos.x, oldPos.y);
+          c_alf.lineTo(pos.x, pos.y);
+          c_alf.stroke();
+          c_alf.closePath();
+         
+          // socket.IOサーバーに、
+          // どの点からどの点までを描画するかをの情報を送付する
+          socket.emit("draw_alf", {before:oldPos, after:pos});
+          oldPos = pos;
+        }
+      }, false);
+      canvas.addEventListener("mouseout", function () {
+        console.log("mouseout");
+        drawing = false;
+        drawing_alf = false;
+      }, false);
+      /*
+      canvas_alf.addEventListener("mouseout", function () {
+        console.log("mouseout_alf");
+        drawing = false;
+        drawing_alf = false;
+      }, false);
+     */
+      // 色や太さを選択した場合の処理
+      // 選択した結果を、Canvasに設定して、
+      // socket.IOサーバーにも送付している
+      $("#black").click(function () {c.strokeStyle = "black";socket.emit("color", "black");
+        c_alf.strokeStyle = "black"});
+      $("#blue").click(function () {c.strokeStyle = "blue";socket.emit("color", "blue");
+        c_alf.strokeStyle = "blue";});
+      $("#red").click(function () {c.strokeStyle = "red";socket.emit("color", "red");
+        c_alf.strokeStyle = "red";});
+      $("#green").click(function () {c.strokeStyle = "green";socket.emit("color", "green");
+        c_alf.strokeStyle = "green";});
+      $("#white").click(function () {c.strokeStyle = "white";socket.emit("color", "white");
+        c_alf.strokeStyle = "#ccc";});
+      $("#small").click(function () {c.lineWidth = 5;socket.emit("lineWidth", 5);});
+      $("#middle").click(function () {c.lineWidth = 10;socket.emit("lineWidth", 10);});
+      $("#large").click(function () {c.lineWidth = 20;socket.emit("lineWidth", 20);});
+      
+      /*
+      function sendMessage() {
+       var msg = $("#message").val(); //取得
+
+       $("#message").val(""); //空白にする
+       socket.emit("send_msg", {value:msg}); //サーバへ送信
+       addMessage(msg);
+      }
+      
+      window.localStorage.setItem("user", JSON.stringify(data));
+
+      var stdata = window.localStorage.getItem("user");
+      var data3 = JSON.parse(stdata);
+      console.log(data3.name);
+
+      */
+      function sendMessage() {
+        var stdata = window.localStorage.getItem("user");
+        var data3 = JSON.parse(stdata);
+        //console.log(data3.user);
+        var msg = "["+data3.user +"]:"+ $("#message").val(); //取得
+        console.log(msg);
+        $("#message").val(""); //空白にする
+        socket.emit("send_msg", {value:msg}); //サーバへ送信
+        addMessage(msg);
+        var scrollHeight = document.getElementById("chat_list").scrollHeight;
+        document.getElementById("chat_list").scrollTop = scrollHeight;
+      }
+
+      function sendMessage2(message) {
+        socket.emit('message', message);
+      }
+
+      $("#msg_submit").on("click",function () {
+        if(!$("#message").val() == "") {
+          sendMessage();
+        }
+      });
+      
+      function addMessage (value,color,size) {
+       //var msg = value.replace( /[!@$%<>'"&|]/g, '' );
+       var msg = value;
+       //タグ記号とかいくつか削除
+        //$("#chat_list").prepend("<div class='msg'>" + msg + "</div>");
+       $("#chat_list").append("<div class='msg'>" + msg + "</div>");
+      }
+      
+      function sendImage () {
+        /*キーえあーど　binary*/
+        
+        var file = $("#uploadFile")[0].files[0];
+        var image = new Image();
+        var reader = new FileReader();
+
+        // File APIを使用し、ローカルファイルを読み込む
+        reader.onload = function(evt) {
+
+          // 画像がloadされた後に、canvasに描画する
+          image.onload = function() {
+            c.drawImage(image, 0, 0,canvas.width,canvas.height);
+          }
+
+          // 画像のURLをソースに設定
+          image.src = evt.target.result;
+          socket.emit("send_img", {value:image.src});
+        }
+
+        // ファイルを読み込み、データをBase64でエンコードされたデータURLにして返す
+        reader.readAsDataURL(file);
+
+      }
+      $("#img_submit").on("click",sendImage);
+
+      function addImage (src) {
+        
+        var img = new Image();
+        img.src = src;
+        img.onload=function (){
+           c.drawImage(img,0,0,canvas.width,canvas.height);
+        }
+      }
+      //画像共有終わり
+
+      //カメラgetElementById
+      //var video = document.getElementById("localVideo");
+      //var video2 = document.getElementById("remoteVideo");
+      var canvas2 = document.getElementById("canvas2");
+      var remoteCanvas = document.getElementById("remoteCanvas");
+      var ctx = canvas2.getContext('2d');
+      var localMediaStream = null;
+      var video = document.querySelector('#localVideo');
+      var remoteVideo = document.querySelector('#remoteVideo');
+
+      //カメラ使えるかチェック
+      var hasGetUserMedia = function() {
+        return !!(navigator.getUserMedia || navigator.webkitGetUserMedia ||
+          navigator.mozGetUserMedia || navigator.msGetUserMedia);
+      }
+      //エラー
+      var onFailSoHard = function(e) {
+        console.log('エラー!', e);
+      };
+      //カメラ画像キャプチャ
+      var snapshot = function() {
+        if (localMediaStream) {
+          ctx.drawImage(localVideo, 0, 0);
+          document.querySelector('img').src = canvas.toDataURL('image/jpeg',1.0);
+        }
+      }
+      if (hasGetUserMedia()) {
+        console.log("カメラ OK");
+      } else {
+        alert("未対応ブラウザです。");
+      }
+      window.URL = window.URL || window.webkitURL;
+      navigator.getUserMedia  = navigator.getUserMedia || navigator.webkitGetUserMedia ||
+                    navigator.mozGetUserMedia || navigator.msGetUserMedia;
+      /*
+      navigator.getUserMedia({video: true}, function(stream) {
+          video.src = window.URL.createObjectURL(stream);
+          localMediaStream = stream;
+      }, onFailSoHard);
+      */
+      var outputInterval = 0;
+      function outputVideo2 () {
+        navigator.getUserMedia({video: true}, function(stream) {
+          video.src = window.URL.createObjectURL(stream);
+          localMediaStream = stream;
+      }, onFailSoHard);
+       var outputInterval = setInterval(function(){
+         /*var canvas = document.getElementById("c");*/
+         canvas2.getContext("2d").drawImage(video, 0, 0,250,140);
+         var v_src = canvas2.toDataURL('image/jpeg',1.0);
+         //console.log(v_src);
+         socket.emit("send_video",{value:v_src});
+        }, 1000/30);
+       console.log(outputInterval);
+      }
+      $("#output").on("click",outputVideo2);
+      $("#stop").on("click",function (){
+        clearInterval(outputInterval);
+        console.log(outputInterval);
+        outputInterval = 0;
+      });
+      /*.getUserMedia(constraints, handleUserMedia, handleUserMediaError);
+      
+      navigator.getUserMedia({video: true}, function(stream) {
+        video.src = window.URL.createObjectURL(stream);
+        console.log("vid");
+        //socket.emit("send_video", {value:video.src});
+        localMediaStream = stream;
+      }, constraints,onFailSoHard,handleUserMedia, handleUserMediaError);
+      */
+      function addVideo (vid) {
+        console.log("addvideo");
+        remoteCanvas.getContext("2d").drawImage(vid.value, 0, 0,250,140);
+      }
+
+      /////////////////////////
+      //video共有のためのwebRTC//
+      /////////////////////////
+
+      //ボタンイベント
+      $("#capture").click(function() {
+        snapshot();
+      });
+      $("#stop").click(function() {
+        localMediaStream.stop();
+      });
+      $("video").click(function() {
+        snapshot();
+      });
+      // socket.IOサーバーから描画情報を受け取った場合の処理
+      var myName;
+      // socket.IOサーバーから描画情報を受け取った場合の処理
+      socket.on("ret_name", function (t_name){
+        myName = {
+          "user": t_name.value
+         }; 
+        console.log(myName);
+        window.localStorage.setItem("user",JSON.stringify(myName));
+      });
+
+      socket.on("broad_img", function (file) {
+        console.log("onbroad_img");
+        addImage(file.value);
+      });
+
+      var remoteVideoImage = new Image();
+      socket.on("broad_video", function (vid) {
+        console.log("vid");
+        remoteVideoImage.src = vid.value;
+        remoteCanvas.getContext("2d").drawImage(remoteVideoImage, 0, 0,250,140);
+      });
+
+      socket.on("broad_msg", function (msg) {
+        console.log("onbroad");
+        addMessage(msg.value);
+      });
+
+      // 受け取った情報を元に、Canvasに描画を行う
+      socket.on("all_clear", function () {
+        var size = $(".list1 input")[0].value;
+        c.clearRect(0,0,canvas.width*size*0.01,canvas.height*size*0.01);
+      });
+      socket.on("draw", function (data) {
+        //console.log("on draw : " + data);
+        c.beginPath();
+        c.moveTo(data.before.x, data.before.y);
+        c.lineTo(data.after.x, data.after.y);
+        c.stroke();
+        c.closePath();
+      });
+      socket.on("draw_alf", function (data) {
+        //console.log("on draw : " + data);
+        c_alf.beginPath();
+        c_alf.moveTo(data.before.x, data.before.y);
+        c_alf.lineTo(data.after.x, data.after.y);
+        c_alf.stroke();
+        c_alf.closePath();
+      });
+
+      // socket.IOサーバーから色情報を受け取った場合の処理
+      // Canvasに色を設定している
+      socket.on("color", function (data) {
+        //console.log("on color : " + data);
+        c.strokeStyle = data;
+        c_alf.strokeStyle = data;
+      });
+
+           
+      // socket.IOサーバーから線の太さ情報を受け取った場合の処理
+      // Canvasに線の太さを設定している
+      socket.on("lineWidth", function (data) {
+        //console.log("on lineWidth : " + data);
+        c.lineWidth = data;
+      });
+      socket.on("send_pdf", function (data) {
+        //console.log("on lineWidth : " + data);
+        pdf_flag = true;
+        PDFJS.getDocument(data.value).then(function (pdfDoc_) {
+          pdfDoc = pdfDoc_;
+           //document.getElementById('page_count').textContent = pdfDoc.numPages;
+
+          // Initial/first page rendering
+          renderPage(pageNum);
+        });
+      });
+      socket.on("send_page", function (data) {
+        queueRenderPage(data.value);
+      });
+      /*
+      $("button").on("click",buttonClicked);
+      function buttonClicked () {
+        $("button").toggleClass("selected")
+      }
+        */
+    PDFJS.workerSrc = './pdf.worker.js';
+    /*
+    function loadPDFData(url) {
+        var base64pdfData = url;
+
+        function base64ToUint8Array(base64) {
+            var raw = atob(base64);
+            var uint8Array = new Uint8Array(new ArrayBuffer(raw.length));
+            for (var i = 0, len = raw.length; i < len; ++i) {
+                uint8Array[i] = raw.charCodeAt(i);
+            }
+            return uint8Array;
+        }
+        return base64ToUint8Array(base64pdfData);
+    }
+
+    var pdfData;*/
+    var pdfDoc = null,
+      pageNum = 1,
+      pageRendering = false,
+      pageNumPending = null,
+      scale = 1;
+    function Sendpdf () {
+      // pdf.worker.js へのパスを指定する 
+      console.log("aaa");
+      
+      var url;
+      var file = $("#uploadPDF")[0].files[0];
+      var reader = new FileReader();
+      //var pdfData = loadPDFData();
+      
+      reader.onload = function(evt) {
+          // 画像のURLをソースに設定[
+          console.log("ddd");
+          console.log(evt.target.result);
+          url = evt.target.result;
+          pdf_flag = true;
+          socket.emit("send_pdf", {value:url});
+          
+          PDFJS.getDocument(url).then(function (pdfDoc_) {
+          pdfDoc = pdfDoc_;
+           //document.getElementById('page_count').textContent = pdfDoc.numPages;
+
+          // Initial/first page rendering
+          renderPage(pageNum);
+        });
+          //pdfData = loadPDFData(url);*/
+      }
+      reader.readAsDataURL(file);
+        /**
+   * Asynchronously downloads PDF.
+   */   
+   }
+
+      function renderPage(num) {
+        pageRendering = true;
+      // Using promise to fetch the page
+        pdfDoc.getPage(num).then(function(page) {
+          var viewport = page.getViewport(scale);
+          //$("#myCanvas").css("height",viewport.height);
+          //$("#myCanvas").css("width",viewport.width);
+          var rate_h = canvas.height/viewport.height;
+          var rate_w = canvas.width/viewport.width;
+          
+          var temp_h = canvas.height;
+          var temp_w = canvas.width;
+          
+          //canvas.height = viewport.height;
+          //canvas.width = viewport.width;
+          var wrap_canvas = document.getElementById("wrap_canvas");
+
+          console.log(rate_h+", "+rate_w);
+          canvas.height /= rate_h;
+          canvas.width /= rate_w;
+
+          canvas_alf.height /= rate_h;
+          canvas_alf.width /= rate_w;
+
+          $("#myCanvas").css("height",canvas.height);
+          $("#myCanvas").css("width",canvas.width);
+
+          console.log(canvas.height+", "+canvas.width);
+
+          $("#wrap_canvas").css("height",canvas.height);
+          $("#wrap_canvas").css("width",canvas.width);
+
+          $("#myCanvas2").css("height",canvas.height);
+          $("#myCanvas2").css("width",canvas.width);
+          //viewport.height *= rate_h;
+          //viewport.width *= rate_w;
+          // Render PDF page into canvas context
+          var renderContext = { 
+          
+            canvasContext: c,
+            viewport: viewport
+          };
+          var renderTask = page.render(renderContext);
+
+          // Wait for rendering to finish
+          renderTask.promise.then(function () {
+            pageRendering = false;
+            if (pageNumPending !== null) {
+              // New page rendering is pending
+              renderPage(pageNumPending);
+              pageNumPending = null;
+            }
+          });
+        });// Update page counters
+          //canvas.height = temp_h;
+          //canvas.width = temp_w;
+        //document.getElementById('page_num').textContent = pageNum;
+      }
+  /**
+   * If another page rendering in progress, waits until the rendering is
+   * finised. Otherwise, executes rendering immediately.
+   */
+  function queueRenderPage(num) {
+    if (pageRendering) {
+      pageNumPending = num;
+    } else {
+      renderPage(num);
+    }
+  }
+
+  /**
+   * Displays previous page.
+   */
+  function onPrevPage() {
+    if (pageNum <= 1) {
+      return;
+    }
+    pageNum--;
+    socket.emit("send_page",{value:pageNum});
+    queueRenderPage(pageNum);
+  }
+  document.getElementById('prev').addEventListener('click', onPrevPage);
+
+  /**
+   * Displays next page.
+   */
+  function onNextPage() {
+    if (pageNum >= pdfDoc.numPages) {
+      return;
+    }
+    pageNum++;
+    socket.emit("send_page",{value:pageNum});
+    queueRenderPage(pageNum);
+  }
+  document.getElementById('next').addEventListener('click', onNextPage);
+
+ 
+      // File APIを使用し、ローカルファイルを読み込む
+      //reader.onload = function(evt) {
+
+           // 画像がloadされた後に、canvasに描画する
+      /*    image.onload = function() {
+          c.drawImage(image, 0, 0,450,400);
+      }
+
+          // 画像のURLをソースに設定
+          image.src = evt.target.result;
+          socket.emit("send_img", {value:image.src});
+        }*/ 
+   
+    $("#pdf_submit").on("click", Sendpdf);
+
+    }, false);
+
+  </script>
+
+  <!-- Header -->
+  <header>
+    <h1 class="title">Lesson</h1>
+  </header>
+  <nav class="global">
+    <i id="menu" class="fa fa-bars"></i>
+
+    <ul>
+      <li class="list1"><form method="post"><label>Canvas Size&emsp;
+      <input type="range" id="input_canvas_size" value="100" max="200">
+      </label><span>100%</span></form></li>
+
+      <li class="list4"><form method="post"><label>Video Size&emsp;&ensp;
+      <input type="range" id="input_video_size" value="100" max="200">
+      </label><span>100%</span></form></li>
+
+      <li class="list2"><form method="post"><label>MyVideo Size
+      <input type="range" id="input_my_video_size" value="100" max="200">
+      </label><span>100%</span></form></li>
+
+      <li class="list3"><form method="post"><label>Chat Size&emsp;&emsp;
+      <input type="range" id="input_chat_size" value="100" max="200">
+      </label><span>100%</span></form></li>
+
+      <li>
+        <p>共有する画像ファイル：<br><input id="uploadFile" type="file" name="files" accept="image/*"><input id="img_submit" class="submit_button" type="submit"  value="送信" /></p>
+      </li>
+      <li>
+        <p>共有するPDFファイル：<br><input id="uploadPDF" type="file" name="files"><input id="pdf_submit" class="submit_button" type="submit"  value="送信" /></p>
+      </li>
+      <li>    
+          <form id="logout" action="/logout">
+              <button>logout</button>
+          </form>
+          <button id="all_clear">all clear</button>
+      </li>
+    </ul>
+  </nav>
+  <!-- Main -->
+  <div class="main">
+    <div class="toolbar">
+      <button id="black"></button>
+      <button id="blue"></button>
+      <button id="red"></button>
+      <button id="green"></button>
+      <button id="white"></button>
+      <button id="small">S</button>
+      <button id="middle">M</button>
+      <button id="large">L</button>
+      <!--
+      <ul>
+        <li id="black"> </li>
+        <li id="blue"></li>
+        <li id="red"></li>
+        <li id="green"></li>
+        <li id="small">S</li>
+        <li id="middle">M</li>
+        <li id="large">L</li>
+      </ul>
+      -->
+    </div>
+    <div style="clear:left;"></div>
+  
+    <div id="canvas_wrap" class="canvas">
+      <canvas id="myCanvas" width="550" height="450"></canvas>
+      <canvas id="myCanvas2" width="550" height="450"></canvas>
+    </div>
+    <div id="wrap_v_c">
+      <p><i class="fa fa-camera"></i><b>Camera</b></p>
+      <canvas id="remoteCanvas" autoplay></canvas>
+      <p text-align="center"><i class="fa fa-weixin"></i><b>Chat</b></p>
+      <div id="chat_list"></div>
+    </div>
+    <form action="/send" method="post" onsubmit="return false;">
+    <input type="text" class="text"  id="message" placeholder="input message" />
+    <input id="msg_submit" class="submit_button" type="submit" value="送信" />
+    </form>
+    <br>
+    <!--
+    <p>共有する画像ファイル：<br><input id="uploadFile" type="file" name="files" accept="image/*"><input id="img_submit" class="submit_button" type="submit"  value="送信" /></p>
+    -->
+    <canvas id="canvas2"></canvas>
+    <div style="border: 1px solid #ccc">
+      <div display="block" float="left" border="1px solid #ccc" >
+        <div width="50%">MyCamera &emsp;<button id="output">output</button>
+        <button id="stop">stop</button></div>
+        <video id="localVideo" autoplay display="block" float="left"></video>
+
+      </div>
+    </div>
+      
+    
+      <div id="control" display="block" text-align="center" border="1px solid #ccc">
+
+        <i id="prev" class="awesome fa fa-caret-square-o-left fa-5x"></i>
+        <i id="next" class="awesome fa fa-caret-square-o-right fa-5x"></i>
+      </div>
+  </div>
+  <br>
+</body>
+</html>
